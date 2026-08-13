@@ -1,5 +1,8 @@
 package id.dpradana.themoviedb.core.network.di
 
+import com.google.gson.Gson
+import dagger.Module
+import dagger.Provides
 import id.dpradana.themoviedb.core.network.BuildConfig
 import id.dpradana.themoviedb.core.network.api.MovieApi
 import id.dpradana.themoviedb.core.network.config.NetworkConfig
@@ -8,9 +11,17 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Singleton
 
-object NetworkModule {
+@Module
+class NetworkModule {
 
+    @Provides
+    @Singleton
+    fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
@@ -26,14 +37,18 @@ object NetworkModule {
             .build()
     }
 
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    @Provides
+    @Singleton
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl(NetworkConfig.TMDB_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 
+    @Provides
+    @Singleton
     fun provideMovieApi(retrofit: Retrofit): MovieApi {
         return retrofit.create(MovieApi::class.java)
     }

@@ -1,11 +1,13 @@
 package id.dpradana.themoviedb
 
 import android.app.Application
+import id.dpradana.themoviedb.core.network.di.AppComponentProvider
+import id.dpradana.themoviedb.core.network.api.MovieApi
 import id.dpradana.themoviedb.di.AppComponent
 import id.dpradana.themoviedb.di.AppModule
 import id.dpradana.themoviedb.di.DaggerAppComponent
 
-class MovieExplorerApplication : Application() {
+class MovieExplorerApplication : Application(), AppComponentProvider {
 
     lateinit var appComponent: AppComponent
         private set
@@ -20,4 +22,6 @@ class MovieExplorerApplication : Application() {
             
         appComponent.inject(this)
     }
+
+    override fun movieApi(): MovieApi = appComponent.movieApi()
 }

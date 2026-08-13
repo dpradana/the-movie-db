@@ -1,8 +1,10 @@
 package id.dpradana.themoviedb.feature.reviews.presentation
 
 import id.dpradana.themoviedb.core.common.AppResult
+import id.dpradana.themoviedb.feature.reviews.domain.model.MovieSummary
 import id.dpradana.themoviedb.feature.reviews.domain.model.ReviewPage
 import id.dpradana.themoviedb.feature.reviews.domain.usecase.GetMovieReviewsUseCase
+import id.dpradana.themoviedb.feature.reviews.domain.usecase.GetMovieSummaryUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +20,7 @@ class ReviewViewModelTest {
 
     private lateinit var viewModel: ReviewViewModel
     private val getMovieReviewsUseCase: GetMovieReviewsUseCase = mockk()
+    private val getMovieSummaryUseCase: GetMovieSummaryUseCase = mockk()
     private val testDispatcher = StandardTestDispatcher()
 
     private val reviewPage = ReviewPage(
@@ -29,7 +32,10 @@ class ReviewViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ReviewViewModel(getMovieReviewsUseCase)
+        coEvery { getMovieSummaryUseCase(any()) } returns AppResult.Success(
+            MovieSummary("Test Movie", 8.0, 100)
+        )
+        viewModel = ReviewViewModel(getMovieReviewsUseCase, getMovieSummaryUseCase)
     }
 
     @After

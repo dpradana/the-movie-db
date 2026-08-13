@@ -49,4 +49,7 @@ dependencies {
 
     implementation(libs.dagger)
     ksp(libs.dagger.compiler)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }

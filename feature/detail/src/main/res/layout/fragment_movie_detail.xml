@@ -203,32 +203,6 @@
                 app:layout_constraintStart_toStartOf="@id/tvTitle"
                 app:layout_constraintTop_toBottomOf="@id/tvOverview" />
 
-            <TextView
-                android:id="@+id/tvSeeAllReviews"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="See All"
-                android:textColor="@color/accent_gold"
-                android:textSize="14sp"
-                app:layout_constraintBottom_toBottomOf="@id/tvReviewsLabel"
-                app:layout_constraintEnd_toEndOf="@id/tvTitle"
-                app:layout_constraintTop_toTopOf="@id/tvReviewsLabel" />
-
-            <LinearLayout
-                android:id="@+id/llReviewsContainer"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical"
-                app:layout_constraintEnd_toEndOf="@id/tvTitle"
-                app:layout_constraintStart_toStartOf="@id/tvTitle"
-                app:layout_constraintTop_toBottomOf="@id/tvReviewsLabel">
-
-                <include layout="@layout/item_review_placeholder" />
-                <include layout="@layout/item_review_placeholder" />
-
-            </LinearLayout>
-
             <Button
                 android:id="@+id/btnReviews"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
@@ -237,10 +211,10 @@
                 android:layout_marginTop="16dp"
                 android:text="SEE REVIEWS"
                 android:textColor="@color/accent_gold"
-                app:strokeColor="@color/accent_gold"
                 app:layout_constraintEnd_toEndOf="@id/tvTitle"
                 app:layout_constraintStart_toStartOf="@id/tvTitle"
-                app:layout_constraintTop_toBottomOf="@id/llReviewsContainer" />
+                app:layout_constraintTop_toBottomOf="@id/tvReviewsLabel"
+                app:strokeColor="@color/accent_gold" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

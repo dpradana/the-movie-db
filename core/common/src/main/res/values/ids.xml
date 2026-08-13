@@ -4,6 +4,10 @@
     <item name="genreFragment" type="id" />
     <item name="movieFragment" type="id" />
     <item name="movieDetailFragment" type="id" />
+    <item name="reviewFragment" type="id" />
+    <item name="trailerFragment" type="id" />
     <item name="action_genreFragment_to_movieFragment" type="id" />
     <item name="action_movieFragment_to_movieDetailFragment" type="id" />
+    <item name="action_movieDetailFragment_to_reviewFragment" type="id" />
+    <item name="action_movieDetailFragment_to_trailerFragment" type="id" />
 </resources>

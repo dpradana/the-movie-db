@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import coil.load
+import id.dpradana.themoviedb.core.common.R as CommonR
 import id.dpradana.themoviedb.core.network.di.AppComponentProvider
 import id.dpradana.themoviedb.feature.detail.databinding.FragmentMovieDetailBinding
 import id.dpradana.themoviedb.feature.detail.di.DaggerMovieDetailComponent
@@ -71,10 +72,34 @@ class MovieDetailFragment : Fragment() {
             viewModel.retry()
         }
         binding.btnTrailer.setOnClickListener {
-            // Future contract
+            val state = viewModel.uiState.value
+            if (state is MovieDetailUiState.Success) {
+                val movie = state.movie
+                val bundle = Bundle().apply {
+                    putInt("movieId", movie.id)
+                    putString("movieTitle", movie.title)
+                }
+                findNavController().navigate(
+                    CommonR.id.action_movieDetailFragment_to_trailerFragment,
+                    bundle
+                )
+            }
         }
         binding.btnReviews.setOnClickListener {
-            // Future contract
+            val state = viewModel.uiState.value
+            if (state is MovieDetailUiState.Success) {
+                val movie = state.movie
+                val bundle = Bundle().apply {
+                    putInt("movieId", movie.id)
+                    putString("movieTitle", movie.title)
+                    putFloat("averageRating", movie.rating?.toFloat() ?: 0f)
+                    putInt("voteCount", movie.voteCount ?: 0)
+                }
+                findNavController().navigate(
+                    CommonR.id.action_movieDetailFragment_to_reviewFragment,
+                    bundle
+                )
+            }
         }
     }
 

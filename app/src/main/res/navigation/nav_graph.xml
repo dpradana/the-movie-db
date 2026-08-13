@@ -39,5 +39,43 @@
         <argument
             android:name="movieId"
             app:argType="integer" />
+        <action
+            android:id="@id/action_movieDetailFragment_to_reviewFragment"
+            app:destination="@id/reviewFragment" />
+        <action
+            android:id="@id/action_movieDetailFragment_to_trailerFragment"
+            app:destination="@id/trailerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@id/reviewFragment"
+        android:name="id.dpradana.themoviedb.feature.reviews.presentation.ReviewFragment"
+        android:label="ReviewFragment"
+        tools:layout="@layout/fragment_reviews">
+        <argument
+            android:name="movieId"
+            app:argType="integer" />
+        <argument
+            android:name="movieTitle"
+            app:argType="string" />
+        <argument
+            android:name="averageRating"
+            app:argType="float" />
+        <argument
+            android:name="voteCount"
+            app:argType="integer" />
+    </fragment>
+
+    <fragment
+        android:id="@id/trailerFragment"
+        android:name="id.dpradana.themoviedb.feature.reviews.presentation.TrailerFragment"
+        android:label="TrailerFragment"
+        tools:layout="@layout/fragment_trailer">
+        <argument
+            android:name="movieId"
+            app:argType="integer" />
+        <argument
+            android:name="movieTitle"
+            app:argType="string" />
     </fragment>
 </navigation>

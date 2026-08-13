@@ -21,7 +21,7 @@ class ReviewViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val reviewPage = ReviewPage(
-        reviews = emptyList(),
+        reviews = listOf(mockk()),
         page = 1,
         totalPages = 2
     )
@@ -45,7 +45,8 @@ class ReviewViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
+        assertTrue(state is ReviewUiState.Success)
+        state as ReviewUiState.Success
         assertEquals(1, state.currentPage)
         assertTrue(state.hasNextPage)
     }
@@ -58,8 +59,8 @@ class ReviewViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertEquals("Error", state.error)
+        assertTrue(state is ReviewUiState.Error)
+        assertEquals("Error", (state as ReviewUiState.Error).message)
     }
 
     @Test
@@ -68,14 +69,15 @@ class ReviewViewModelTest {
         viewModel.setMovieId(1)
         advanceUntilIdle()
 
-        val secondPage = ReviewPage(emptyList(), 2, 2)
+        val secondPage = ReviewPage(listOf(mockk()), 2, 2)
         coEvery { getMovieReviewsUseCase(1, 2) } returns AppResult.Success(secondPage)
 
         viewModel.loadNextPage()
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertEquals(2, state.currentPage)
+        assertTrue(state is ReviewUiState.Success)
+        assertEquals(2, (state as ReviewUiState.Success).currentPage)
         assertFalse(state.hasNextPage)
     }
 }

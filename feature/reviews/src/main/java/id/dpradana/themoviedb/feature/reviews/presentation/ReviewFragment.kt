@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -13,11 +15,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import id.dpradana.themoviedb.core.common.R as CommonR
 import id.dpradana.themoviedb.core.network.di.AppComponentProvider
 import id.dpradana.themoviedb.feature.reviews.databinding.FragmentReviewsBinding
 import id.dpradana.themoviedb.feature.reviews.di.DaggerReviewComponent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.DecimalFormat
 import javax.inject.Inject
 
 class ReviewFragment : Fragment() {
@@ -30,7 +34,7 @@ class ReviewFragment : Fragment() {
     private var _binding: FragmentReviewsBinding? = null
     private val binding get() = _binding!!
 
-    private val adapter = ReviewAdapter()
+    private lateinit var reviewAdapter: ReviewAdapter
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -39,7 +43,8 @@ class ReviewFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentReviewsBinding.inflate(inflater, container, false)
@@ -50,57 +55,43 @@ class ReviewFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         val movieId = arguments?.getInt("movieId") ?: -1
-        val movieTitle = arguments?.getString("movieTitle") ?: ""
-        val averageRating = arguments?.getFloat("averageRating") ?: 0f
-        val voteCount = arguments?.getInt("voteCount") ?: 0
-
-        setupHeader(movieTitle, averageRating, voteCount)
+        viewModel.setMovieId(movieId)
+        
         setupRecyclerView()
         setupListeners()
         observeUiState()
-        
-        viewModel.setMovieId(movieId)
-    }
-
-    private fun setupHeader(title: String, rating: Float, count: Int) {
-        binding.apply {
-            tvMovieTitle.text = title
-            tvAverageRating.text = String.format(java.util.Locale.US, "%.1f", rating)
-            tvVoteCount.text = "Based on ${java.text.NumberFormat.getInstance().format(count)} reviews"
-            
-            tvRatingLabel.text = when {
-                rating >= 8 -> "Outstanding"
-                rating >= 7 -> "Good"
-                rating >= 5 -> "Average"
-                else -> "Poor"
-            }
-        }
     }
 
     private fun setupRecyclerView() {
-        binding.rvReviews.adapter = adapter
-        binding.rvReviews.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-                
-                val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-                val visibleItemCount = layoutManager.childCount
-                val totalItemCount = layoutManager.itemCount
-                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
-                
-                if (visibleItemCount + firstVisibleItemPosition >= totalItemCount - 5) {
-                    viewModel.loadNextPage()
+        reviewAdapter = ReviewAdapter(
+            onRetryClick = { viewModel.retry() }
+        )
+        
+        binding.rvReviews.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = reviewAdapter
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    val layoutManager = layoutManager as LinearLayoutManager
+                    val totalItemCount = layoutManager.itemCount
+                    val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+                    
+                    if (lastVisibleItemPosition + 3 >= totalItemCount) {
+                        viewModel.loadNextPage()
+                    }
                 }
-            }
-        })
+            })
+        }
     }
 
     private fun setupListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-        binding.btnRetry.setOnClickListener {
+        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.layoutError.root.findViewById<Button>(CommonR.id.btnRetry)?.setOnClickListener {
             viewModel.retry()
+        }
+        binding.layoutError.root.findViewById<View>(CommonR.id.tvGoBack)?.setOnClickListener {
+            findNavController().popBackStack()
         }
     }
 
@@ -113,18 +104,52 @@ class ReviewFragment : Fragment() {
     }
 
     private fun renderState(state: ReviewUiState) {
-        binding.apply {
-            pbLoading.isVisible = state.isLoading
-            errorLayout.isVisible = state.error != null
-            tvEmpty.isVisible = !state.isLoading && state.error == null && state.reviews.isEmpty()
-            rvReviews.isVisible = state.reviews.isNotEmpty()
-            llLoadMore.isVisible = state.isLoadingMore
-            
-            if (state.error != null) {
-                tvErrorMessage.text = state.error
+        binding.pbLoading.isVisible = state is ReviewUiState.Loading
+        binding.rvReviews.isVisible = state is ReviewUiState.Success
+        binding.layoutError.root.isVisible = state is ReviewUiState.Error
+        binding.layoutEmpty.isVisible = state is ReviewUiState.Empty
+        binding.cvRatingSummary.isVisible = state is ReviewUiState.Success
+        
+        binding.llLoadMore.isVisible = false
+
+        when (state) {
+            is ReviewUiState.Success -> {
+                reviewAdapter.submitList(state.reviews)
+                reviewAdapter.setState(state.isLoadingMore, state.paginationError)
+                
+                binding.tvMovieTitle.text = state.movieTitle
+                binding.tvMovieTitle.isVisible = !state.movieTitle.isNullOrEmpty()
+                
+                state.averageRating?.let { rating ->
+                    binding.tvAverageRating.text = DecimalFormat("#.1").format(rating)
+                    
+                    val label = when {
+                        rating >= 8.0 -> "Outstanding"
+                        rating >= 7.0 -> "Good"
+                        rating >= 5.0 -> "Average"
+                        else -> "Poor"
+                    }
+                    binding.tvRatingLabel.text = label
+                }
+
+                state.voteCount?.let { count ->
+                    val formattedCount = DecimalFormat("#,###").format(count)
+                    binding.tvVoteCount.text = "Based on $formattedCount reviews"
+                    binding.tvVoteCount.isVisible = true
+                } ?: run {
+                    binding.tvVoteCount.isVisible = false
+                }
             }
-            
-            adapter.submitList(state.reviews)
+            is ReviewUiState.Error -> {
+                val errorMsg = getString(CommonR.string.error_failed_to_load_pattern, "reviews") + "\n" +
+                        getString(CommonR.string.error_message_generic)
+                binding.layoutError.root.findViewById<TextView>(CommonR.id.tvErrorMessage)?.text = errorMsg
+            }
+            is ReviewUiState.Empty -> {
+                binding.layoutEmpty.setTitle(CommonR.string.review_empty_title)
+                binding.layoutEmpty.setMessage(CommonR.string.review_empty_message)
+            }
+            else -> {}
         }
     }
 

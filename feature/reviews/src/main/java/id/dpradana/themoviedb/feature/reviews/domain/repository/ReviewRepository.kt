@@ -1,6 +1,7 @@
 package id.dpradana.themoviedb.feature.reviews.domain.repository
 
 import id.dpradana.themoviedb.core.common.AppResult
+import id.dpradana.themoviedb.feature.reviews.domain.model.MovieSummary
 import id.dpradana.themoviedb.feature.reviews.domain.model.ReviewPage
 
 interface ReviewRepository {
@@ -8,4 +9,8 @@ interface ReviewRepository {
         movieId: Int,
         page: Int
     ): AppResult<ReviewPage>
+
+    suspend fun getMovieSummary(
+        movieId: Int
+    ): AppResult<MovieSummary>
 }

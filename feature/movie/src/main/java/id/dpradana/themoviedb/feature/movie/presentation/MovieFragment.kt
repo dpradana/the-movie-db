@@ -5,14 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.navigation.fragment.findNavController
 import id.dpradana.themoviedb.core.common.R as CommonR
 import id.dpradana.themoviedb.core.network.di.AppComponentProvider
 import id.dpradana.themoviedb.feature.movie.databinding.FragmentMovieBinding
@@ -40,7 +42,8 @@ class MovieFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMovieBinding.inflate(inflater, container, false)
@@ -54,48 +57,39 @@ class MovieFragment : Fragment() {
         val genreName = arguments?.getString("genreName") ?: "Movies"
         
         binding.tvGenreName.text = genreName
+        viewModel.setGenre(genreId)
         
         setupRecyclerView()
         setupListeners()
         observeUiState()
-        
-        viewModel.setGenre(genreId)
     }
 
     private fun setupRecyclerView() {
         movieAdapter = MovieAdapter(
             onMovieClick = { movie ->
-                val bundle = Bundle().apply {
-                    putInt("movieId", movie.id)
-                }
-                findNavController().navigate(
-                    CommonR.id.action_movieFragment_to_movieDetailFragment,
-                    bundle
-                )
+                val bundle = Bundle().apply { putInt("movieId", movie.id) }
+                findNavController().navigate(CommonR.id.action_movieFragment_to_movieDetailFragment, bundle)
             },
-            onRetryClick = {
-                viewModel.retry()
-            }
+            onRetryClick = { viewModel.retry() }
         )
         
-        val gridLayoutManager = GridLayoutManager(requireContext(), 2)
-        gridLayoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+        val layoutManager = GridLayoutManager(requireContext(), 2)
+        layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int {
                 return if (movieAdapter.getItemViewType(position) == 1) 2 else 1
             }
         }
         
         binding.rvMovies.apply {
-            layoutManager = gridLayoutManager
+            this.layoutManager = layoutManager
             adapter = movieAdapter
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
-                    val visibleItemCount = layoutManager?.childCount ?: 0
-                    val totalItemCount = layoutManager?.itemCount ?: 0
-                    val firstVisibleItemPosition = (layoutManager as? GridLayoutManager)?.findFirstVisibleItemPosition() ?: 0
+                    val totalItemCount = layoutManager.itemCount
+                    val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
                     
-                    if (visibleItemCount + firstVisibleItemPosition >= totalItemCount - 5) {
+                    if (lastVisibleItemPosition + 5 >= totalItemCount) {
                         viewModel.loadNextPage()
                     }
                 }
@@ -104,11 +98,12 @@ class MovieFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-        binding.btnRetry.setOnClickListener {
+        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.layoutError.root.findViewById<Button>(CommonR.id.btnRetry)?.setOnClickListener {
             viewModel.retry()
+        }
+        binding.layoutError.root.findViewById<View>(CommonR.id.tvGoBack)?.setOnClickListener {
+            findNavController().popBackStack()
         }
     }
 
@@ -121,17 +116,28 @@ class MovieFragment : Fragment() {
     }
 
     private fun renderState(state: MovieUiState) {
-        binding.progressBar.isVisible = state.isLoading
-        binding.rvMovies.isVisible = state.movies.isNotEmpty()
-        binding.errorContainer.isVisible = state.error != null
-        binding.tvEmptyMessage.isVisible = !state.isLoading && state.error == null && state.movies.isEmpty()
-        
-        if (state.error != null) {
-            binding.tvErrorMessage.text = state.error
+        binding.progressBar.isVisible = state is MovieUiState.Loading
+        binding.rvMovies.isVisible = state is MovieUiState.Success
+        binding.layoutError.root.isVisible = state is MovieUiState.Error
+        binding.layoutEmpty.isVisible = state is MovieUiState.Empty
+
+        when (state) {
+            is MovieUiState.Success -> {
+                movieAdapter.submitList(state.movies)
+                movieAdapter.setState(state.isLoadingMore, state.paginationError)
+            }
+            is MovieUiState.Error -> {
+                val genreName = arguments?.getString("genreName") ?: "movies"
+                binding.layoutError.root.findViewById<TextView>(CommonR.id.tvErrorMessage)?.text = 
+                    getString(CommonR.string.error_failed_to_load_pattern, genreName) + "\n" +
+                    getString(CommonR.string.error_message_generic)
+            }
+            is MovieUiState.Empty -> {
+                binding.layoutEmpty.setTitle(CommonR.string.movie_empty_title)
+                binding.layoutEmpty.setMessage(CommonR.string.movie_empty_message)
+            }
+            else -> {}
         }
-        
-        movieAdapter.submitList(state.movies)
-        movieAdapter.setState(state.isLoadingMore, state.paginationError)
     }
 
     override fun onDestroyView() {

@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -38,7 +40,8 @@ class MovieDetailFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMovieDetailBinding.inflate(inflater, container, false)
@@ -48,58 +51,26 @@ class MovieDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        val movieId = arguments?.getInt("movieId") ?: -1
+        viewModel.loadMovieDetail(movieId)
+        
         setupListeners()
         observeUiState()
-        setupScrollListener()
-        
-        val movieId = arguments?.getInt("movieId") ?: -1
-        viewModel.getMovieDetail(movieId)
-    }
-
-    private fun setupScrollListener() {
-        binding.scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
-            val alpha = (scrollY.toFloat() / 300f).coerceIn(0f, 1f)
-            binding.vHeaderBg.alpha = alpha
-            binding.tvHeaderTitle.alpha = alpha
-        }
     }
 
     private fun setupListeners() {
-        binding.btnBack.setOnClickListener {
-            findNavController().popBackStack()
-        }
-        binding.btnRetry.setOnClickListener {
+        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.layoutError.root.findViewById<Button>(CommonR.id.btnRetry)?.setOnClickListener {
             viewModel.retry()
         }
-        binding.btnTrailer.setOnClickListener {
-            val state = viewModel.uiState.value
-            if (state is MovieDetailUiState.Success) {
-                val movie = state.movie
-                val bundle = Bundle().apply {
-                    putInt("movieId", movie.id)
-                    putString("movieTitle", movie.title)
-                }
-                findNavController().navigate(
-                    CommonR.id.action_movieDetailFragment_to_trailerFragment,
-                    bundle
-                )
-            }
+        binding.layoutError.root.findViewById<View>(CommonR.id.tvGoBack)?.setOnClickListener {
+            findNavController().popBackStack()
         }
-        binding.btnReviews.setOnClickListener {
-            val state = viewModel.uiState.value
-            if (state is MovieDetailUiState.Success) {
-                val movie = state.movie
-                val bundle = Bundle().apply {
-                    putInt("movieId", movie.id)
-                    putString("movieTitle", movie.title)
-                    putFloat("averageRating", movie.rating?.toFloat() ?: 0f)
-                    putInt("voteCount", movie.voteCount ?: 0)
-                }
-                findNavController().navigate(
-                    CommonR.id.action_movieDetailFragment_to_reviewFragment,
-                    bundle
-                )
-            }
+
+        binding.scrollView.setOnScrollChangeListener { _, _, scrollY, _, _ ->
+            val alpha = (scrollY.toFloat() / 400f).coerceIn(0f, 1f)
+            binding.vHeaderBg.alpha = alpha
+            binding.tvHeaderTitle.alpha = alpha
         }
     }
 
@@ -113,46 +84,56 @@ class MovieDetailFragment : Fragment() {
 
     private fun renderState(state: MovieDetailUiState) {
         binding.progressBar.isVisible = state is MovieDetailUiState.Loading
-        binding.errorContainer.isVisible = state is MovieDetailUiState.Error
         binding.scrollView.isVisible = state is MovieDetailUiState.Success
+        binding.layoutError.root.isVisible = state is MovieDetailUiState.Error
 
         when (state) {
             is MovieDetailUiState.Success -> {
-                displayMovieDetail(state.movie)
+                bindMovie(state.movie)
             }
             is MovieDetailUiState.Error -> {
-                binding.tvErrorMessage.text = state.message
+                val errorMsg = getString(CommonR.string.error_failed_to_load_pattern, "movie details") + "\n" +
+                        getString(CommonR.string.error_message_generic)
+                binding.layoutError.root.findViewById<TextView>(CommonR.id.tvErrorMessage)?.text = errorMsg
             }
-            MovieDetailUiState.Loading -> {
-                // Already handled by progressBar.isVisible
-            }
+            else -> {}
         }
     }
 
-    private fun displayMovieDetail(movie: MovieDetail) {
-        binding.apply {
-            ivBackdrop.load("https://image.tmdb.org/t/p/w780${movie.backdropPath}") {
-                crossfade(true)
+    private fun bindMovie(movie: MovieDetail) {
+        binding.tvTitle.text = movie.title
+        binding.tvHeaderTitle.text = movie.title
+        binding.tvOverview.text = movie.overview
+        binding.tvRuntime.text = "${movie.runtime}m"
+        binding.tvRating.text = "★ ${movie.rating}/10"
+        binding.tvReleaseDate.text = movie.releaseDate?.take(4) ?: ""
+        binding.tvGenresShort.text = movie.genres.joinToString { it.name }
+        binding.tvStatus.text = movie.status
+
+        binding.ivPoster.load("https://image.tmdb.org/t/p/w500${movie.posterPath}") {
+            crossfade(true)
+            placeholder(CommonR.color.background_card)
+        }
+        binding.ivBackdrop.load("https://image.tmdb.org/t/p/original${movie.backdropPath}") {
+            crossfade(true)
+        }
+
+        binding.btnReviews.setOnClickListener {
+            val bundle = Bundle().apply {
+                putInt("movieId", movie.id)
+                putString("movieTitle", movie.title)
+                putFloat("averageRating", movie.rating.toFloat())
+                putInt("voteCount", movie.voteCount)
             }
-            ivPoster.load("https://image.tmdb.org/t/p/w500${movie.posterPath}") {
-                crossfade(true)
+            findNavController().navigate(CommonR.id.action_movieDetailFragment_to_reviewFragment, bundle)
+        }
+
+        binding.btnTrailer.setOnClickListener {
+            val bundle = Bundle().apply {
+                putInt("movieId", movie.id)
+                putString("movieTitle", movie.title)
             }
-            tvTitle.text = movie.title
-            tvHeaderTitle.text = movie.title
-            
-            val rating = movie.rating
-            tvRating.text = "★ ${String.format("%.1f", rating)}/10"
-            
-            tvReleaseDate.text = movie.releaseDate?.take(4) ?: ""
-            
-            val hours = (movie.runtime ?: 0) / 60
-            val minutes = (movie.runtime ?: 0) % 60
-            tvRuntime.text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-            
-            tvGenresShort.text = movie.genres.joinToString(", ") { it.name }
-            
-            tvOverview.text = movie.overview
-            tvStatus.text = movie.status
+            findNavController().navigate(CommonR.id.action_movieDetailFragment_to_trailerFragment, bundle)
         }
     }
 

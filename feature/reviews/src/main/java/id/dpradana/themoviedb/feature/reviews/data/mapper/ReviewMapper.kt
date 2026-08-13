@@ -1,7 +1,9 @@
 package id.dpradana.themoviedb.feature.reviews.data.mapper
 
+import id.dpradana.themoviedb.core.network.api.model.MovieDetailDto
 import id.dpradana.themoviedb.core.network.api.model.ReviewDto
 import id.dpradana.themoviedb.core.network.api.model.ReviewResponseDto
+import id.dpradana.themoviedb.feature.reviews.domain.model.MovieSummary
 import id.dpradana.themoviedb.feature.reviews.domain.model.Review
 import id.dpradana.themoviedb.feature.reviews.domain.model.ReviewPage
 
@@ -26,5 +28,13 @@ fun ReviewDto.toDomain(): Review {
         content = content.orEmpty(),
         createdAt = createdAt,
         url = url
+    )
+}
+
+fun MovieDetailDto.toDomain(): MovieSummary {
+    return MovieSummary(
+        title = title.orEmpty(),
+        averageRating = voteAverage ?: 0.0,
+        voteCount = voteCount ?: 0
     )
 }

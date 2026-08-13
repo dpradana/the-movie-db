@@ -43,16 +43,17 @@ class MovieViewModelTest {
 
         viewModel.setGenre(28)
         
-        assertTrue(viewModel.uiState.value.isLoading)
+        assertTrue(viewModel.uiState.value is MovieUiState.Loading)
         
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
+        assertTrue(state is MovieUiState.Success)
+        state as MovieUiState.Success
         assertEquals(listOf(movie1), state.movies)
         assertEquals(1, state.currentPage)
         assertTrue(state.hasNextPage)
-        assertNull(state.error)
+        assertNull(state.paginationError)
     }
 
     @Test
@@ -63,9 +64,8 @@ class MovieViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertEquals("API Error", state.error)
-        assertTrue(state.movies.isEmpty())
+        assertTrue(state is MovieUiState.Error)
+        assertEquals("API Error", (state as MovieUiState.Error).message)
     }
 
     @Test
@@ -79,11 +79,14 @@ class MovieViewModelTest {
         coEvery { discoverMoviesUseCase(28, 2) } returns AppResult.Success(MoviePage(listOf(movie2), 2, 2))
         viewModel.loadNextPage()
         
-        assertTrue(viewModel.uiState.value.isLoadingMore)
+        val loadingState = viewModel.uiState.value
+        assertTrue(loadingState is MovieUiState.Success && loadingState.isLoadingMore)
         
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
+        assertTrue(state is MovieUiState.Success)
+        state as MovieUiState.Success
         assertFalse(state.isLoadingMore)
         assertEquals(listOf(movie1, movie2), state.movies)
         assertEquals(2, state.currentPage)
@@ -101,6 +104,8 @@ class MovieViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
+        assertTrue(state is MovieUiState.Success)
+        state as MovieUiState.Success
         assertFalse(state.isLoadingMore)
         assertEquals(listOf(movie1), state.movies)
         assertEquals("Pagination Error", state.paginationError)
@@ -134,7 +139,9 @@ class MovieViewModelTest {
         viewModel.retry()
         advanceUntilIdle()
         
-        assertEquals(listOf(movie1), viewModel.uiState.value.movies)
+        val state = viewModel.uiState.value
+        assertTrue(state is MovieUiState.Success)
+        assertEquals(listOf(movie1), (state as MovieUiState.Success).movies)
     }
 
     @Test
@@ -151,7 +158,10 @@ class MovieViewModelTest {
         viewModel.retry()
         advanceUntilIdle()
         
-        assertEquals(listOf(movie1, movie2), viewModel.uiState.value.movies)
-        assertEquals(2, viewModel.uiState.value.currentPage)
+        val state = viewModel.uiState.value
+        assertTrue(state is MovieUiState.Success)
+        state as MovieUiState.Success
+        assertEquals(listOf(movie1, movie2), state.movies)
+        assertEquals(2, state.currentPage)
     }
 }

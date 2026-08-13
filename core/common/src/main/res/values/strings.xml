@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_title">Connection Lost</string>
+    <string name="error_message_generic">The transmission from the outer rim was interrupted.</string>
+    <string name="error_retry_transmission">Retry Transmission</string>
+    <string name="error_go_back">Go back to Explore</string>
+    <string name="error_failed_to_load_pattern">Failed to load %1$s.</string>
+
+    <string name="retry">Retry</string>
+
+    <string name="genre_empty_title">No Genres</string>
+    <string name="genre_empty_message">No genres are available right now.</string>
+
+    <string name="movie_empty_title">No Movies Found</string>
+    <string name="movie_empty_message">There are no movies available for this genre.</string>
+
+    <string name="review_empty_title">No Reviews Yet</string>
+    <string name="review_empty_message">This movie has no reviews yet.</string>
+
+    <string name="pagination_error_message">Unable to load more</string>
+</resources>

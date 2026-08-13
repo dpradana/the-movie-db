@@ -5,7 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -31,8 +32,6 @@ class GenreFragment : Fragment() {
     private var _binding: FragmentGenreBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var genreAdapter: GenreAdapter
-
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val movieApi = (requireActivity().application as AppComponentProvider).movieApi()
@@ -56,9 +55,7 @@ class GenreFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        genreAdapter = GenreAdapter { genre ->
-            // Navigation placeholder
-            Toast.makeText(requireContext(), "Clicked: ${genre.name}", Toast.LENGTH_SHORT).show()
+        val genreAdapter = GenreAdapter { genre ->
             navigateToMovieList(genre.id, genre.name)
         }
         binding.rvGenres.apply {
@@ -68,9 +65,10 @@ class GenreFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.btnRetry.setOnClickListener {
+        binding.layoutError.root.findViewById<Button>(CommonR.id.btnRetry)?.setOnClickListener {
             viewModel.retry()
         }
+        binding.layoutError.root.findViewById<View>(CommonR.id.tvGoBack)?.isVisible = false
     }
 
     private fun observeUiState() {
@@ -84,15 +82,21 @@ class GenreFragment : Fragment() {
     private fun renderState(state: GenreUiState) {
         binding.progressBar.isVisible = state is GenreUiState.Loading
         binding.rvGenres.isVisible = state is GenreUiState.Success
-        binding.errorContainer.isVisible = state is GenreUiState.Error
-        binding.tvEmptyMessage.isVisible = state is GenreUiState.Empty
+        binding.layoutError.root.isVisible = state is GenreUiState.Error
+        binding.layoutEmpty.isVisible = state is GenreUiState.Empty
 
         when (state) {
             is GenreUiState.Success -> {
-                genreAdapter.submitList(state.genres)
+                (binding.rvGenres.adapter as? GenreAdapter)?.submitList(state.genres)
             }
             is GenreUiState.Error -> {
-                binding.tvErrorMessage.text = state.message
+                val errorMsg = getString(CommonR.string.error_failed_to_load_pattern, "genres") + "\n" +
+                        getString(CommonR.string.error_message_generic)
+                binding.layoutError.root.findViewById<TextView>(CommonR.id.tvErrorMessage)?.text = errorMsg
+            }
+            is GenreUiState.Empty -> {
+                binding.layoutEmpty.setTitle(CommonR.string.genre_empty_title)
+                binding.layoutEmpty.setMessage(CommonR.string.genre_empty_message)
             }
             else -> {}
         }

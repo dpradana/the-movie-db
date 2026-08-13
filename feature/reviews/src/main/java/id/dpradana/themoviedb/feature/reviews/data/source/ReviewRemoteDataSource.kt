@@ -1,6 +1,7 @@
 package id.dpradana.themoviedb.feature.reviews.data.source
 
 import id.dpradana.themoviedb.core.network.api.MovieApi
+import id.dpradana.themoviedb.core.network.api.model.MovieDetailDto
 import id.dpradana.themoviedb.core.network.api.model.ReviewResponseDto
 import javax.inject.Inject
 
@@ -15,5 +16,11 @@ class ReviewRemoteDataSource @Inject constructor(
             movieId = movieId,
             page = page
         )
+    }
+
+    suspend fun getMovieDetail(
+        movieId: Int
+    ): MovieDetailDto {
+        return movieApi.getMovieDetail(movieId)
     }
 }

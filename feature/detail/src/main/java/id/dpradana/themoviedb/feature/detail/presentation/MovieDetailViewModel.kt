@@ -17,31 +17,34 @@ class MovieDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<MovieDetailUiState>(MovieDetailUiState.Loading)
     val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
 
-    private var currentMovieId: Int? = null
+    private var movieId: Int = -1
 
-    fun getMovieDetail(movieId: Int) {
-        currentMovieId = movieId
-        fetchMovieDetail(movieId)
+    fun loadMovieDetail(id: Int) {
+        if (movieId == id && _uiState.value is MovieDetailUiState.Success) return
+        movieId = id
+        fetchDetail()
     }
 
-    fun retry() {
-        currentMovieId?.let { fetchMovieDetail(it) }
-    }
-
-    private fun fetchMovieDetail(movieId: Int) {
+    private fun fetchDetail() {
+        _uiState.value = MovieDetailUiState.Loading
         viewModelScope.launch {
-            _uiState.value = MovieDetailUiState.Loading
             when (val result = getMovieDetailUseCase(movieId)) {
                 is AppResult.Success -> {
                     _uiState.value = MovieDetailUiState.Success(result.data)
                 }
                 is AppResult.Error -> {
-                    _uiState.value = MovieDetailUiState.Error(result.exception.message ?: "Unknown error occurred")
+                    _uiState.value = MovieDetailUiState.Error(result.exception.message ?: "Unknown error")
                 }
                 is AppResult.Loading -> {
                     _uiState.value = MovieDetailUiState.Loading
                 }
             }
+        }
+    }
+
+    fun retry() {
+        if (movieId != -1) {
+            fetchDetail()
         }
     }
 }

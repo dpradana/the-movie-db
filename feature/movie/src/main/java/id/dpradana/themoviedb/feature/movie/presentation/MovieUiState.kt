@@ -2,12 +2,18 @@ package id.dpradana.themoviedb.feature.movie.presentation
 
 import id.dpradana.themoviedb.feature.movie.domain.model.Movie
 
-data class MovieUiState(
-    val movies: List<Movie> = emptyList(),
-    val isLoading: Boolean = false,
-    val isLoadingMore: Boolean = false,
-    val error: String? = null,
-    val paginationError: String? = null,
-    val currentPage: Int = 1,
-    val hasNextPage: Boolean = true
-)
+sealed interface MovieUiState {
+    data object Loading : MovieUiState
+    
+    data class Success(
+        val movies: List<Movie>,
+        val currentPage: Int,
+        val hasNextPage: Boolean,
+        val isLoadingMore: Boolean = false,
+        val paginationError: String? = null
+    ) : MovieUiState
+    
+    data object Empty : MovieUiState
+    
+    data class Error(val message: String) : MovieUiState
+}

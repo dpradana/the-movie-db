@@ -47,10 +47,10 @@ class MovieDetailViewModelTest {
     }
 
     @Test
-    fun `getMovieDetail success should update state to Success`() = runTest {
+    fun `loadMovieDetail success should update state to Success`() = runTest {
         coEvery { getMovieDetailUseCase(1) } returns AppResult.Success(movieDetail)
 
-        viewModel.getMovieDetail(1)
+        viewModel.loadMovieDetail(1)
         
         assertEquals(MovieDetailUiState.Loading, viewModel.uiState.value)
         
@@ -62,10 +62,10 @@ class MovieDetailViewModelTest {
     }
 
     @Test
-    fun `getMovieDetail error should update state to Error`() = runTest {
+    fun `loadMovieDetail error should update state to Error`() = runTest {
         coEvery { getMovieDetailUseCase(1) } returns AppResult.Error(Exception("API Error"))
 
-        viewModel.getMovieDetail(1)
+        viewModel.loadMovieDetail(1)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -76,7 +76,7 @@ class MovieDetailViewModelTest {
     @Test
     fun `retry should request the same movie detail`() = runTest {
         coEvery { getMovieDetailUseCase(1) } returns AppResult.Error(Exception("Error"))
-        viewModel.getMovieDetail(1)
+        viewModel.loadMovieDetail(1)
         advanceUntilIdle()
 
         coEvery { getMovieDetailUseCase(1) } returns AppResult.Success(movieDetail)

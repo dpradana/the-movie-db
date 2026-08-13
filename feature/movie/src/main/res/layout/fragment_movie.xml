@@ -60,41 +60,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
-        android:id="@+id/errorContainer"
+    <include
+        android:id="@+id/layoutError"
+        layout="@layout/view_error_state"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/tvErrorMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Unable to load movies."
-            android:textAlignment="center"
-            android:textColor="@color/text_primary" />
-
-        <Button
-            android:id="@+id/btnRetry"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Retry" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvEmptyMessage"
+    <id.dpradana.themoviedb.core.common.view.EmptyStateView
+        android:id="@+id/layoutEmpty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No movies found.\nTry another genre."
-        android:textAlignment="center"
-        android:textColor="@color/text_primary"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

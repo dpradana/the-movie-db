@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="fragmentContainer" type="id" />
+    <item name="genreFragment" type="id" />
+    <item name="movieFragment" type="id" />
+    <item name="action_genreFragment_to_movieFragment" type="id" />
+</resources>

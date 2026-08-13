@@ -12,6 +12,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.navigation.fragment.findNavController
+import id.dpradana.themoviedb.core.common.R as CommonR
 import id.dpradana.themoviedb.core.network.di.AppComponentProvider
 import id.dpradana.themoviedb.feature.genre.databinding.FragmentGenreBinding
 import id.dpradana.themoviedb.feature.genre.di.DaggerGenreComponent
@@ -97,8 +99,11 @@ class GenreFragment : Fragment() {
     }
 
     private fun navigateToMovieList(genreId: Int, genreName: String) {
-        // Navigation action prepared
-        // For now, it's just a placeholder as feature:movie is not implemented.
+        val bundle = Bundle().apply {
+            putInt("genreId", genreId)
+            putString("genreName", genreName)
+        }
+        findNavController().navigate(CommonR.id.action_genreFragment_to_movieFragment, bundle)
     }
 
     override fun onDestroyView() {

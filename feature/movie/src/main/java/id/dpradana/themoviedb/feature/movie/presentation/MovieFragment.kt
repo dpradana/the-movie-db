@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.navigation.fragment.findNavController
+import id.dpradana.themoviedb.core.common.R as CommonR
 import id.dpradana.themoviedb.core.network.di.AppComponentProvider
 import id.dpradana.themoviedb.feature.movie.databinding.FragmentMovieBinding
 import id.dpradana.themoviedb.feature.movie.di.DaggerMovieComponent
@@ -64,7 +65,13 @@ class MovieFragment : Fragment() {
     private fun setupRecyclerView() {
         movieAdapter = MovieAdapter(
             onMovieClick = { movie ->
-                // Navigation to Detail (contract only)
+                val bundle = Bundle().apply {
+                    putInt("movieId", movie.id)
+                }
+                findNavController().navigate(
+                    CommonR.id.action_movieFragment_to_movieDetailFragment,
+                    bundle
+                )
             },
             onRetryClick = {
                 viewModel.retry()

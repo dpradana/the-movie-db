@@ -26,5 +26,18 @@
         <argument
             android:name="genreName"
             app:argType="string" />
+        <action
+            android:id="@id/action_movieFragment_to_movieDetailFragment"
+            app:destination="@id/movieDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@id/movieDetailFragment"
+        android:name="id.dpradana.themoviedb.feature.detail.presentation.MovieDetailFragment"
+        android:label="MovieDetailFragment"
+        tools:layout="@layout/fragment_movie_detail">
+        <argument
+            android:name="movieId"
+            app:argType="integer" />
     </fragment>
 </navigation>

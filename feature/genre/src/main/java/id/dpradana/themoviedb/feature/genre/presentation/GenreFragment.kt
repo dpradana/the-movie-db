@@ -36,7 +36,7 @@ class GenreFragment : Fragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         val movieApi = (requireActivity().application as AppComponentProvider).movieApi()
-        DaggerGenreComponent.factory().create(movieApi).inject(this)
+        DaggerGenreComponent.factory().create(context, movieApi).inject(this)
     }
 
     override fun onCreateView(
